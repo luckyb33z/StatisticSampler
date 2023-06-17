@@ -1,0 +1,5 @@
+# Ignore object files
+
+main/
+obj/
+bin/
