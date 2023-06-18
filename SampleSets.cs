@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SampleSets
 {
@@ -101,6 +102,52 @@ namespace SampleSets
                 Console.WriteLine("Cannot report cluster sample; initial data failed to load.");
             }
 
+        }
+    }
+
+    public class SimpleRandomSample: Sample<int[]>
+    {
+        public SimpleRandomSample(int numSamples): base(numSamples) {}
+
+        public override void BuildSamples(ref int[][] samplesToRead)
+        {
+            int numStrata = samplesToRead.Length;
+            int samplesPerStrata = samplesToRead[0].Length;
+            int sampleLength = numStrata * samplesPerStrata;
+            int[] allSamples = new int[sampleLength];
+
+            int sampleIndex = 0;
+            for (int strata = 0; strata < numStrata; strata++)
+            {
+                for (int sample = 0; sample < samplesPerStrata; sample++)
+                {   
+                    allSamples[sampleIndex++] = samplesToRead[strata][sample];
+                }
+            }
+
+            List<int> samplesTaken = new List<int>();
+            int[] samplesToReturn = new int[NumSamples];
+
+            for (int i = 0; i < NumSamples; i++)
+            {
+                int randomIndex = -1;
+                
+                do
+                {
+                    randomIndex = Util.Rand.Next(sampleLength);
+                } while (samplesTaken.Contains(randomIndex));
+
+                samplesTaken.Add(randomIndex);
+                samplesToReturn[i] = allSamples[randomIndex];
+            }
+
+            SampleStorage = samplesToReturn;
+                
+        }
+
+        public override void ReportSamples()
+        {
+            Console.WriteLine($"Simple Random Sample: {Util.GetSamples(SampleStorage)}");
         }
     }
 }
