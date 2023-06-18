@@ -3,6 +3,7 @@ using SampleSets;
 
 namespace SampleExamples
 {
+    using Util;
 
     class StatisticSampler
     {
@@ -29,6 +30,14 @@ namespace SampleExamples
             SampleSets.SimpleRandomSample simpleRandomSample = new SimpleRandomSample(numSimpleRandomSamples);
             simpleRandomSample.BuildSamples(ref stratums);
             simpleRandomSample.ReportSamples();
+
+            int numSystematicSamples = 12;
+            int samplesLength = stratums.Length * stratums[0].Length;
+            int startValue = Util.Rand.Next(samplesLength);
+            int increment = 10;
+            SampleSets.SystematicSample systematicSample = new SystematicSample(numSystematicSamples, startValue, increment);
+            systematicSample.BuildSamples(ref stratums);
+            systematicSample.ReportSamples();
             
         }
 

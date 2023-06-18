@@ -5,6 +5,31 @@ namespace SampleSets
 {
     using Util;
 
+    public static class SampleUtil
+    {
+        /// <summary>
+        /// From a given 2D array (like an array of strata with samples in each strata), flatten into a single array.
+        /// </summary>
+        public static int[] FlattenSample(ref int[][] sampleToFlatten)
+        {
+            int numStrata = sampleToFlatten.Length;
+            int samplesPerStrata = sampleToFlatten[0].Length;
+            int sampleLength = numStrata * samplesPerStrata;
+            int[] allSamples = new int[sampleLength];
+
+            int sampleIndex = 0;
+            for (int strata = 0; strata < numStrata; strata++)
+            {
+                for (int sample = 0; sample < samplesPerStrata; sample++)
+                {   
+                    allSamples[sampleIndex++] = sampleToFlatten[strata][sample];
+                }
+            }
+
+            return allSamples;
+        }
+    }
+
     abstract public class Sample<T>
     {
         private T _sampleStorage;
@@ -111,19 +136,7 @@ namespace SampleSets
 
         public override void BuildSamples(ref int[][] samplesToRead)
         {
-            int numStrata = samplesToRead.Length;
-            int samplesPerStrata = samplesToRead[0].Length;
-            int sampleLength = numStrata * samplesPerStrata;
-            int[] allSamples = new int[sampleLength];
-
-            int sampleIndex = 0;
-            for (int strata = 0; strata < numStrata; strata++)
-            {
-                for (int sample = 0; sample < samplesPerStrata; sample++)
-                {   
-                    allSamples[sampleIndex++] = samplesToRead[strata][sample];
-                }
-            }
+            int[] allSamples = SampleUtil.FlattenSample(ref samplesToRead);
 
             List<int> samplesTaken = new List<int>();
             int[] samplesToReturn = new int[NumSamples];
@@ -134,7 +147,7 @@ namespace SampleSets
                 
                 do
                 {
-                    randomIndex = Util.Rand.Next(sampleLength);
+                    randomIndex = Util.Rand.Next(allSamples.Length);
                 } while (samplesTaken.Contains(randomIndex));
 
                 samplesTaken.Add(randomIndex);
@@ -148,6 +161,54 @@ namespace SampleSets
         public override void ReportSamples()
         {
             Console.WriteLine($"Simple Random Sample: {Util.GetSamples(SampleStorage)}");
+        }
+    }
+
+    public class SystematicSample: Sample<int[]>
+    {
+        private int _startValue = 0;
+        private int _increment = 1;
+
+        public SystematicSample(int numSamples, int startValue = 0, int increment = 1): base(numSamples)
+        {
+            _startValue = startValue;
+            _increment = increment;
+        }
+
+        public override void BuildSamples(ref int[][] samplesToRead)
+        {
+            int[] allSamples = SampleUtil.FlattenSample(ref samplesToRead);
+
+            int indexToGet = _startValue;
+            int[] systematicSamples = new int[NumSamples];
+            for (int i = 0; i < NumSamples; i++)
+            {
+                if (indexToGet >= allSamples.Length)
+                {
+                    // Check if we will get a meaningful index on the next wraparound.
+                    // If the modulo is zero, then we'll just be repeating numbers...
+                    // If not, we're ok.
+                    if (allSamples.Length % _increment == 0)
+                    {
+                        indexToGet = Util.Rand.Next(allSamples.Length);
+                    }
+                    else
+                    {
+                        indexToGet -= allSamples.Length;
+                    }
+                }
+
+                systematicSamples[i] = allSamples[indexToGet];
+
+                indexToGet += _increment;
+            }
+
+            SampleStorage = systematicSamples;
+        }
+
+        public override void ReportSamples()
+        {
+            Console.WriteLine($"Systematic Sample (Start: {_startValue}, Increment: {_increment}): {Util.GetSamples(SampleStorage)}");
         }
     }
 }
